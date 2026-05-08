@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.log
+*.fits
+*.fit
+*.fts
+*.png
+*.jpg
+*.jpeg
+.env
+/flux_calibrated
+/quicklook/*txt

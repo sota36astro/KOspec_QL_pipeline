@@ -1,0 +1,45 @@
+# Quicklook Pipeline Configuration
+# Default configuration file for KOspec pipeline
+
+# Input/Output settings
+input:
+  spectra_dir: ./spectra
+  pattern_a: "_A.fits"
+  pattern_b: "_B.fits"
+
+output:
+  quicklook_dir: ./quicklook
+  dpi: 100
+
+# Extraction settings
+extraction:
+  aperture_width: 10
+  sky_offset: 20
+  spatial_axis: 0  # 0 = rows, 1 = cols
+  trace_method: gaussian_fit  # Options: peak, center_of_mass, gaussian_fit
+
+# Wavelength calibration
+calibration:
+  type: linear  # Options: linear, poly
+  wave_start: 4000  # Angstrom
+  wave_end: 9000    # Angstrom
+  
+  # For polynomial (future)
+  # poly_coeffs: [c0, c1, c2, ...]
+
+# Processing options
+processing:
+  positive_peak_only: true  # Only trace positive part of A-B
+  robust_mode: true         # Skip failed objects, continue pipeline
+  
+# Emission line display
+emission_lines:
+  enabled: true
+  redshift: 0.0
+  line_list:
+    - H_Balmer
+    - He_I
+    - He_II
+    - Na_I_D
+    - "[O_I]_6300"
+    - Ca_II_NIR
