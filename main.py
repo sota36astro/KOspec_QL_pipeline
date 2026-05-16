@@ -6,6 +6,7 @@ Main quicklook pipeline script for spectroscopic data
 import argparse
 import sys
 import logging
+import subprocess
 from pathlib import Path
 import numpy as np
 
@@ -356,6 +357,32 @@ def print_summary(results):
     print("="*70)
 
 
+def open_summary_pngs(results):
+    """Open generated quicklook summary PNG files with the OS open command."""
+    summary_paths = [
+        Path(r['files']['summary_png'])
+        for r in results
+        if r.get('files', {}).get('summary_png')
+    ]
+
+    if not summary_paths:
+        print("\nNo summary PNG files to open.")
+        return
+
+    print("\nOpening summary PNG file(s):")
+    for summary_path in summary_paths:
+        print(f"  {summary_path}")
+        try:
+            subprocess.Popen(
+                ['open', str(summary_path)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except FileNotFoundError:
+            print("  WARNING: 'open' command was not found on this PC.")
+            break
+
+
 def main():
     """Main entry point"""
     parser = argparse.ArgumentParser(
@@ -377,6 +404,8 @@ def main():
                        help='Line names or prefix groups to mark')
     parser.add_argument('--objects', nargs='*',
                        help='Only process these object names (default: all pairs)')
+    parser.add_argument('--no-open-summary', action='store_true',
+                       help='Do not open generated summary PNG files at the end')
     parser.add_argument('-v', '--verbose', action='store_true',
                        help='Verbose logging')
     
@@ -413,6 +442,9 @@ def main():
     
     # Summary
     print_summary(results)
+
+    if not args.no_open_summary:
+        open_summary_pngs(results)
     
     # Return exit code
     successful = sum(1 for r in results if r['stage_1d_plot'])

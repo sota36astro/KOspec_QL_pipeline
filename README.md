@@ -56,6 +56,7 @@ python3 main.py
 ```
 
 デフォルトは `./data/spectra/` から入力を読み込み、`./outputs/quicklook/` に出力します。
+処理後、生成された `{object}_summary.png` は `open` コマンドで自動表示します。
 
 ### オプション
 
@@ -70,6 +71,7 @@ python3 main.py --help
 - `--pattern-b`: Bフレームパターン (デフォルト: _B.fits)
 - `--aperture`: Aperture幅（ピクセル、デフォルト: 10）
 - `--z`: 赤方偏移（輝線表示用、デフォルト: 0）
+- `--no-open-summary`: 処理後にsummary PNGを自動表示しない
 - `-v, --verbose`: 詳細なログ出力
 
 ### 例
