@@ -20,7 +20,10 @@
 ## 使用方法
 
 GitHubからの取得は以下のコマンドを、このpipelineのディレクトリを作りたい場所で実行してください。
-git clone 
+```bash
+git clone https://github.com/sota36astro/KOspec_QL_pipeline.git
+
+```
 ### GitHub から取得した直後の初期化
 
 観測PCや解析PCでは、clone 後に以下を1回実行してください。
