@@ -6,6 +6,12 @@ input:
   pattern_a: "_A.fits"
   pattern_b: "_B.fits"
 
+rawdata:
+  # Set this on each observation PC.
+  dir: ""
+  pattern: "*.fits"
+  import_dir: ./data/spectra/latest
+
 output:
   quicklook_dir: ./outputs/quicklook
   flux_calibrated_dir: ./outputs/flux_calibrated

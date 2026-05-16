@@ -7,16 +7,181 @@ import argparse
 import sys
 import logging
 import subprocess
+import shutil
 from pathlib import Path
 import numpy as np
 
 from pipeline.preprocessing import PreprocessingPipeline
+from pipeline.loader import FITSLoader
 from pipeline.extraction import SpectralExtraction
 from pipeline.calibration import WavelengthCalibration
 from pipeline.visualization import SpectrumVisualizer
 from pipeline.utils import setup_logging
 
 logger = logging.getLogger(__name__)
+
+FITS_SUFFIXES = {'.fits', '.fit', '.fts'}
+
+
+def _strip_config_value(value):
+    """Return a plain scalar value from a small YAML-like config line."""
+    value = value.split('#', 1)[0].strip()
+    if not value:
+        return None
+    if (
+        (value.startswith('"') and value.endswith('"'))
+        or (value.startswith("'") and value.endswith("'"))
+    ):
+        value = value[1:-1]
+    return value
+
+
+def load_config_value(config_path, keys, default=None):
+    """Load a nested scalar from config.yaml without requiring PyYAML."""
+    config_path = Path(config_path)
+    if not config_path.exists():
+        return default
+
+    stack = []
+    try:
+        lines = config_path.read_text(encoding='utf-8').splitlines()
+    except OSError:
+        return default
+
+    for line in lines:
+        if not line.strip() or line.lstrip().startswith('#'):
+            continue
+        if ':' not in line:
+            continue
+
+        indent = len(line) - len(line.lstrip(' '))
+        level = indent // 2
+        key, value = line.strip().split(':', 1)
+        stack = stack[:level]
+        stack.append(key.strip())
+
+        if stack == list(keys):
+            parsed = _strip_config_value(value)
+            return default if parsed is None else parsed
+
+    return default
+
+
+def candidate_fits_files(rawdata_dir, pattern):
+    """Return FITS candidates sorted newest first."""
+    rawdata_dir = Path(rawdata_dir)
+    if not rawdata_dir.exists():
+        raise FileNotFoundError(f"Rawdata directory not found: {rawdata_dir}")
+
+    if pattern and pattern != "*.fits":
+        candidates = [
+            path for path in rawdata_dir.glob(pattern)
+            if path.is_file() and path.suffix.lower() in FITS_SUFFIXES
+        ]
+    else:
+        candidates = [
+            path for path in rawdata_dir.iterdir()
+            if path.is_file() and path.suffix.lower() in FITS_SUFFIXES
+        ]
+
+    return sorted(candidates, key=lambda path: path.stat().st_mtime, reverse=True)
+
+
+def frame_metadata(filepath, loader, pattern_a, pattern_b):
+    """Return object name and A/B position metadata for a FITS frame."""
+    _, header, success, msg = loader.load(filepath)
+    if not success:
+        raise ValueError(f"Cannot read FITS header for {filepath}: {msg}")
+
+    original_object = loader.get_header_value(header, 'OBJECT', 'UNKNOWN')
+    if original_object == 'UNKNOWN':
+        raise ValueError(f"No OBJECT keyword in {filepath}")
+
+    object_name = str(original_object)
+    position = None
+    if object_name.endswith('_A'):
+        object_name = object_name[:-2]
+        position = 'A'
+    elif object_name.endswith('_B'):
+        object_name = object_name[:-2]
+        position = 'B'
+
+    if position is None:
+        position = str(loader.get_header_value(header, 'POSITION', '')).upper()
+
+    if position not in ['A', 'B']:
+        name = filepath.name
+        if pattern_a in name or '_A' in name:
+            position = 'A'
+        elif pattern_b in name or '_B' in name:
+            position = 'B'
+
+    if position not in ['A', 'B']:
+        raise ValueError(
+            f"Cannot determine A/B position for {filepath.name} "
+            f"(OBJECT={original_object})"
+        )
+
+    return object_name, position
+
+
+def import_latest_pair(args):
+    """Copy the newest raw A/B FITS pair into the import staging directory."""
+    rawdata_dir = args.rawdata_dir or load_config_value(
+        args.config, ['rawdata', 'dir'], default=None
+    )
+    if not rawdata_dir:
+        raise ValueError(
+            "Rawdata directory is not set. Add rawdata.dir to config.yaml "
+            "or pass --rawdata-dir."
+        )
+
+    pattern = args.latest_pattern or load_config_value(
+        args.config, ['rawdata', 'pattern'], default='*.fits'
+    )
+    import_dir = Path(args.import_dir or load_config_value(
+        args.config, ['rawdata', 'import_dir'], default='./data/spectra/latest'
+    ))
+    import_dir.mkdir(parents=True, exist_ok=True)
+
+    loader = FITSLoader()
+    candidates = candidate_fits_files(rawdata_dir, pattern)
+    if len(candidates) < 2:
+        raise ValueError(f"Need at least two FITS files in {rawdata_dir}")
+
+    latest_two = candidates[:2]
+    metadata = [
+        frame_metadata(path, loader, args.pattern_a, args.pattern_b)
+        for path in latest_two
+    ]
+
+    object_names = {item[0] for item in metadata}
+    positions = {item[1] for item in metadata}
+    if len(object_names) != 1 or positions != {'A', 'B'}:
+        details = ', '.join(
+            f"{path.name}: OBJECT={object_name}, POS={position}"
+            for path, (object_name, position) in zip(latest_two, metadata)
+        )
+        raise ValueError(f"Latest two FITS files are not an A/B pair: {details}")
+
+    for old_file in import_dir.iterdir():
+        if old_file.is_file() and old_file.suffix.lower() in FITS_SUFFIXES:
+            old_file.unlink()
+
+    copied = []
+    for source in sorted(latest_two):
+        destination = import_dir / source.name
+        shutil.copy2(source, destination)
+        copied.append(destination)
+
+    object_name = next(iter(object_names))
+    print("\nImported latest raw A/B pair:", flush=True)
+    for source, destination in zip(sorted(latest_two), copied):
+        print(f"  {source} -> {destination}", flush=True)
+
+    args.spectra_dir = str(import_dir)
+    args.objects = [object_name]
+    return copied
 
 
 def create_default_wavelength_solution(npix):
@@ -404,6 +569,16 @@ def main():
                        help='Line names or prefix groups to mark')
     parser.add_argument('--objects', nargs='*',
                        help='Only process these object names (default: all pairs)')
+    parser.add_argument('--config', default='config.yaml',
+                       help='Local config file (default: config.yaml)')
+    parser.add_argument('--import-latest', action='store_true',
+                       help='Copy newest raw A/B FITS pair before running QL')
+    parser.add_argument('--rawdata-dir',
+                       help='Raw FITS directory for --import-latest')
+    parser.add_argument('--latest-pattern',
+                       help='Glob pattern for raw FITS search (default from config or *.fits)')
+    parser.add_argument('--import-dir',
+                       help='Staging directory for imported latest pair (default from config or ./data/spectra/latest)')
     parser.add_argument('--no-open-summary', action='store_true',
                        help='Do not open generated summary PNG files at the end')
     parser.add_argument('-v', '--verbose', action='store_true',
@@ -415,9 +590,17 @@ def main():
     setup_logging(verbose=args.verbose)
     
     logger.info(f"Starting quicklook pipeline")
+    logger.info(f"Redshift: {args.z}")
+
+    if args.import_latest:
+        try:
+            import_latest_pair(args)
+        except Exception as exc:
+            logger.error(f"Failed to import latest raw A/B pair: {exc}")
+            return 1
+
     logger.info(f"Input directory: {args.spectra_dir}")
     logger.info(f"Output directory: {args.output_dir}")
-    logger.info(f"Redshift: {args.z}")
     
     # Initialize pipelines
     prep = PreprocessingPipeline(spectra_dir=args.spectra_dir,
