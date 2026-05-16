@@ -5,6 +5,10 @@ Visualization module for spectra
 import numpy as np
 import logging
 from pathlib import Path
+
+from pipeline.runtime import configure_matplotlib_cache
+configure_matplotlib_cache()
+
 import matplotlib
 matplotlib.use('Agg')  # Non-interactive backend
 import matplotlib.pyplot as plt

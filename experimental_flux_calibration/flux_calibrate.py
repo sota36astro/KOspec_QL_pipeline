@@ -12,15 +12,19 @@ import sys
 from pathlib import Path
 
 import numpy as np
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from pipeline.runtime import configure_matplotlib_cache
+configure_matplotlib_cache()
+
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from astropy.io import fits
 from scipy.ndimage import median_filter
-
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
 
 from pipeline.calibration import WavelengthCalibration
 

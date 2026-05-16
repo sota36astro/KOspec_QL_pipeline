@@ -8,5 +8,25 @@ __pycache__/
 *.jpg
 *.jpeg
 .env
-/flux_calibrated
-/quicklook/*txt
+.venv/
+
+# Local machine settings
+config.yaml
+
+# Observation data and generated products
+data/spectra/*
+!data/spectra/.gitkeep
+
+outputs/quicklook/*
+!outputs/quicklook/.gitkeep
+
+outputs/flux_calibrated/*
+!outputs/flux_calibrated/.gitkeep
+
+logs/*
+!logs/.gitkeep
+
+# Legacy output directories from earlier local runs
+/spectra/
+/quicklook/
+/flux_calibrated/

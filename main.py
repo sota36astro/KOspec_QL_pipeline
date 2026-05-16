@@ -361,10 +361,10 @@ def main():
     parser = argparse.ArgumentParser(
         description='Quicklook pipeline for spectroscopic data'
     )
-    parser.add_argument('--spectra-dir', default='./spectra',
-                       help='Input FITS directory (default: ./spectra)')
-    parser.add_argument('--output-dir', default='./quicklook',
-                       help='Output directory (default: ./quicklook)')
+    parser.add_argument('--spectra-dir', default='./data/spectra',
+                       help='Input FITS directory (default: ./data/spectra)')
+    parser.add_argument('--output-dir', default='./outputs/quicklook',
+                       help='Output directory (default: ./outputs/quicklook)')
     parser.add_argument('--pattern-a', default='_A.fits',
                        help='Pattern for A-position frames (default: _A.fits)')
     parser.add_argument('--pattern-b', default='_B.fits',

@@ -9,6 +9,7 @@ from pathlib import Path
 import numpy as np
 
 from pipeline.calibration import DEFAULT_LINES, WavelengthCalibration
+from pipeline.runtime import configure_matplotlib_cache
 
 
 LINE_ELEMENT_COLORS = {
@@ -108,6 +109,8 @@ def set_all(active, labels, check):
 
 
 def interactive_plot(args):
+    configure_matplotlib_cache()
+
     import matplotlib.pyplot as plt
     from matplotlib.widgets import Button, CheckButtons
 

@@ -15,8 +15,11 @@
 # プロジェクトディレクトリに移動
 cd KOspec_pipeline
 
-# 依存パッケージをインストール
-pip install -r requirements.txt
+# 初期ディレクトリ作成
+python3 setup_kospec.py
+
+# 依存パッケージも同時にインストールする場合
+python3 setup_kospec.py --install-deps
 ```
 
 ## 基本的な使用方法
@@ -28,10 +31,10 @@ python3 main.py
 ```
 
 このコマンドは以下を実行します：
-1. `./spectra/` ディレクトリから FITS ペアを検索
+1. `./data/spectra/` ディレクトリから FITS ペアを検索
 2. A-B差分を計算
 3. 2D spectrum と 1D spectrum を生成
-4. 結果を `./quicklook/` に保存
+4. 結果を `./outputs/quicklook/` に保存
 
 ### よく使うオプション
 
@@ -78,7 +81,7 @@ python3 main.py --help
 入力FITSファイルは以下の命名規則に従う必要があります：
 
 ```
-./spectra/
+./data/spectra/
   ├── {object_name}_A.fits    # A-position frame
   ├── {object_name}_B.fits    # B-position frame
   └── ...
@@ -88,10 +91,10 @@ A と B のペアが自動的にマッチングされます。
 
 ### 出力ファイル
 
-処理結果は `./quicklook/` に以下の形式で保存されます：
+処理結果は `./outputs/quicklook/` に以下の形式で保存されます：
 
 ```
-./quicklook/
+./outputs/quicklook/
   ├── {object}_2d.png         # 2D spectrum画像 (trace とaperture表示)
   ├── {object}_1d.txt         # 1D spectrum (wavelength, flux, sky)
   ├── {object}_1d.png         # 1D spectrum プロット
@@ -214,21 +217,21 @@ Wavelength = c0 + c1*x + c2*x^2 + c3*x^3 + c4*x^4 + c5*x^5 + c6*x^6
 quicklook が出力した 1D テキストスペクトルに対して、別スクリプトで表示する輝線を切り替えられます。
 
 ```bash
-python interactive_lines.py quicklook/SN2026acd_1d.txt --z 0.01
-python interactive_lines.py quicklook/SN2026acd_1d.txt --lines H_Balmer He_I He_II
+python3 interactive_lines.py outputs/quicklook/SN2026acd_1d.txt --z 0.01
+python3 interactive_lines.py outputs/quicklook/SN2026acd_1d.txt --lines H_Balmer He_I He_II
 ```
 
 通常の quicklook / `main_all.py` でも表示する line ID を指定できます。
 
 ```bash
-python main_all.py --z 0.01 --line-list H_Balmer He_I He_II C_III C_IV N_III N_IV N_V
+python3 main_all.py --z 0.01 --line-list H_Balmer He_I He_II C_III C_IV N_III N_IV N_V
 ```
 
-`main.py` / `main_all.py` はデフォルトで `spectra/` 内の全 A-B ペアを処理します。特定天体だけ処理する場合は `--objects` を指定します。
+`main.py` / `main_all.py` はデフォルトで `data/spectra/` 内の全 A-B ペアを処理します。特定天体だけ処理する場合は `--objects` を指定します。
 
 ```bash
-python main.py --objects SN2026acd
-python main_all.py --objects HR4468 SN2026acd
+python3 main.py --objects SN2026acd
+python3 main_all.py --objects HR4468 SN2026acd
 ```
 
 ### カスタム輝線

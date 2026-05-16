@@ -1,0 +1,38 @@
+# Quicklook Pipeline Configuration
+# Copy this file to config.yaml for local PC-specific settings.
+
+input:
+  spectra_dir: ./data/spectra
+  pattern_a: "_A.fits"
+  pattern_b: "_B.fits"
+
+output:
+  quicklook_dir: ./outputs/quicklook
+  flux_calibrated_dir: ./outputs/flux_calibrated
+  dpi: 100
+
+extraction:
+  aperture_width: 10
+  sky_offset: 20
+  spatial_axis: 0
+  trace_method: gaussian_fit
+
+calibration:
+  type: linear
+  wave_start: 4000
+  wave_end: 9000
+
+processing:
+  positive_peak_only: true
+  robust_mode: true
+
+emission_lines:
+  enabled: true
+  redshift: 0.0
+  line_list:
+    - H_Balmer
+    - He_I
+    - He_II
+    - Na_I_D
+    - "[O_I]_6300"
+    - Ca_II_NIR

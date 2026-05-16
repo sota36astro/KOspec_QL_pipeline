@@ -19,23 +19,53 @@
 
 ## 使用方法
 
+### GitHub から取得した直後の初期化
+
+観測PCや解析PCでは、clone 後に以下を1回実行してください。
+
+```bash
+cd KOspec_pipeline
+python3 setup_kospec.py
+```
+
+依存パッケージも同時に入れる場合：
+
+```bash
+python3 setup_kospec.py --install-deps
+```
+
+このスクリプトは、以下のローカル用ディレクトリを作成します。
+
+```text
+data/spectra/                 # 入力FITS置き場
+outputs/quicklook/            # quicklook出力
+outputs/flux_calibrated/      # 強度校正出力
+logs/                         # ログ置き場
+```
+
+観測PCで既存のFITS保存先を使う場合は、データをコピーせず `--spectra-dir` で直接指定できます。
+
+```bash
+python3 main_all.py --spectra-dir /path/to/observed/fits
+```
+
 ### 基本的な使い方
 
 ```bash
-python main.py
+python3 main.py
 ```
 
-デフォルトは `./spectra/` から入力を読み込み、`./quicklook/` に出力します。
+デフォルトは `./data/spectra/` から入力を読み込み、`./outputs/quicklook/` に出力します。
 
 ### オプション
 
 ```bash
-python main.py --help
+python3 main.py --help
 ```
 
 主要なオプション：
-- `--spectra-dir`: 入力FITS directory (デフォルト: ./spectra)
-- `--output-dir`: 出力directory (デフォルト: ./quicklook)
+- `--spectra-dir`: 入力FITS directory (デフォルト: ./data/spectra)
+- `--output-dir`: 出力directory (デフォルト: ./outputs/quicklook)
 - `--pattern-a`: Aフレームパターン (デフォルト: _A.fits)
 - `--pattern-b`: Bフレームパターン (デフォルト: _B.fits)
 - `--aperture`: Aperture幅（ピクセル、デフォルト: 10）
@@ -46,10 +76,10 @@ python main.py --help
 
 ```bash
 # 赤方偏移z=0.05で処理
-python main.py --z 0.05
+python3 main.py --z 0.05
 
 # Aperture幅を15ピクセルに変更
-python main.py --aperture 15 -v
+python3 main.py --aperture 15 -v
 ```
 
 ### Quicklook + 実験的強度校正
@@ -57,7 +87,7 @@ python main.py --aperture 15 -v
 `main_all.py` は、安定版 quicklook の実行後に `experimental_flux_calibration/` の強度校正を続けて実行する wrapper です。
 
 ```bash
-python main_all.py \
+python3 main_all.py \
   --z 0.05 \
   --standard-object HR4468 \
   --flux-targets SN2026acd \
@@ -65,20 +95,20 @@ python main_all.py \
   --smooth-window 75
 ```
 
-デフォルトでは、標準星は `HR4468`、強度校正出力は `./flux_calibrated/` です。
+デフォルトでは、標準星は `HR4468`、強度校正出力は `./outputs/flux_calibrated/` です。
 露出時間は FITS header の `EXPTIME`、差分 airmass 補正は `AIRMASS` から読みます。
 target には quicklook summary と同じ体裁で、強度校正済みスペクトルまで含めた `{object}_summary_all.png` も生成します。
 airmass 補正を切る場合は `--no-airmass-correction`、観測所固有の大気減光曲線を使う場合は `--extinction-curve` を指定します。
 
 ## 入力ファイル形式
 
-- **入力ディレクトリ**: `./spectra/`
+- **入力ディレクトリ**: `./data/spectra/`
 - **ファイル名パターン**: `{object_name}_A.fits` と `{object_name}_B.fits`
 - **形式**: 標準的なFITS 2D画像ファイル
 
 例：
 ```
-spectra/
+data/spectra/
   ├── star001_A.fits
   ├── star001_B.fits
   ├── star002_A.fits
@@ -88,7 +118,7 @@ spectra/
 
 ## 出力ファイル
 
-`./quicklook/` ディレクトリに以下が生成されます：
+`./outputs/quicklook/` ディレクトリに以下が生成されます：
 
 - `{object}_2d.png`: 2D spectrum画像（traceとaperture表示）
 - `{object}_1d.txt`: 1D spectrum (テキスト形式, wavelength と flux)
@@ -137,8 +167,8 @@ spectra/
 ## インストール
 
 ```bash
-# 必要なパッケージをインストール
-pip install -r requirements.txt
+# ローカルディレクトリを作成し、必要なパッケージをインストール
+python3 setup_kospec.py --install-deps
 ```
 
 ## 著者

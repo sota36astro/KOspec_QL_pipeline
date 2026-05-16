@@ -13,6 +13,10 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
+
+from pipeline.runtime import configure_matplotlib_cache
+configure_matplotlib_cache()
+
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -313,10 +317,10 @@ def parse_args():
         description='Run KOspec quicklook and experimental flux calibration'
     )
 
-    parser.add_argument('--spectra-dir', default='./spectra',
-                        help='Input FITS directory (default: ./spectra)')
-    parser.add_argument('--output-dir', default='./quicklook',
-                        help='Quicklook output directory (default: ./quicklook)')
+    parser.add_argument('--spectra-dir', default='./data/spectra',
+                        help='Input FITS directory (default: ./data/spectra)')
+    parser.add_argument('--output-dir', default='./outputs/quicklook',
+                        help='Quicklook output directory (default: ./outputs/quicklook)')
     parser.add_argument('--pattern-a', default='_A.fits',
                         help='Pattern for A-position frames')
     parser.add_argument('--pattern-b', default='_B.fits',
@@ -338,8 +342,8 @@ def parse_args():
                         help='Object name used as flux standard')
     parser.add_argument('--flux-targets', nargs='*',
                         help='Specific object names to flux-calibrate')
-    parser.add_argument('--flux-output-dir', default='flux_calibrated',
-                        help='Flux calibration output directory')
+    parser.add_argument('--flux-output-dir', default='./outputs/flux_calibrated',
+                        help='Flux calibration output directory (default: ./outputs/flux_calibrated)')
     parser.add_argument('--flux-reference',
                         help='External reference standard flux table')
     parser.add_argument('--template-standard', default='HR4468',
