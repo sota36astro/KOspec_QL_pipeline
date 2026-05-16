@@ -8,6 +8,7 @@ import sys
 import logging
 import subprocess
 import shutil
+from datetime import datetime
 from pathlib import Path
 import numpy as np
 
@@ -125,16 +126,36 @@ def frame_metadata(filepath, loader, pattern_a, pattern_b):
     return object_name, position
 
 
-def import_latest_pair(args):
-    """Copy the newest raw A/B FITS pair into the import staging directory."""
-    rawdata_dir = args.rawdata_dir or load_config_value(
-        args.config, ['rawdata', 'dir'], default=None
-    )
-    if not rawdata_dir:
+def resolve_rawdata_dir(args):
+    """Resolve the rawdata directory from CLI options or config.yaml."""
+    if args.rawdata_dir:
+        return args.rawdata_dir
+
+    config_dir = load_config_value(args.config, ['rawdata', 'dir'], default=None)
+    if config_dir:
+        return config_dir
+
+    root_dir = load_config_value(args.config, ['rawdata', 'root_dir'], default=None)
+    if not root_dir:
         raise ValueError(
-            "Rawdata directory is not set. Add rawdata.dir to config.yaml "
+            "Rawdata directory is not set. Add rawdata.root_dir to config.yaml "
             "or pass --rawdata-dir."
         )
+
+    date_format = load_config_value(
+        args.config, ['rawdata', 'date_format'], default='%y%m%d'
+    )
+    rawdata_date = args.rawdata_date or datetime.now().strftime(date_format)
+    date_subdir = load_config_value(
+        args.config, ['rawdata', 'date_subdir'], default='{date}'
+    )
+    relative_dir = date_subdir.format(date=rawdata_date)
+    return str(Path(root_dir) / relative_dir)
+
+
+def import_latest_pair(args):
+    """Copy the newest raw A/B FITS pair into the import staging directory."""
+    rawdata_dir = resolve_rawdata_dir(args)
 
     pattern = args.latest_pattern or load_config_value(
         args.config, ['rawdata', 'pattern'], default='*.fits'
@@ -574,7 +595,9 @@ def main():
     parser.add_argument('--import-latest', action='store_true',
                        help='Copy newest raw A/B FITS pair before running QL')
     parser.add_argument('--rawdata-dir',
-                       help='Raw FITS directory for --import-latest')
+                       help='Exact raw FITS directory for --import-latest')
+    parser.add_argument('--rawdata-date',
+                       help='Date directory name for rawdata.root_dir, e.g. 260516')
     parser.add_argument('--latest-pattern',
                        help='Glob pattern for raw FITS search (default from config or *.fits)')
     parser.add_argument('--import-dir',

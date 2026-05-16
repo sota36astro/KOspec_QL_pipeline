@@ -60,25 +60,40 @@ python3 main.py
 
 ### 直近のraw A/B画像を取り込んでQL
 
-観測PCでは `config.yaml` の `rawdata.dir` にraw FITS置き場を設定します。
+観測PCでは、raw FITS が `rawdata/KOspec/yymmdd/spec/` の下にある想定で、`config.yaml` の `rawdata.root_dir` に `rawdata` までの固定パスを設定します。
 
 ```yaml
 rawdata:
-  dir: /path/to/rawdata
+  root_dir: /path/to/rawdata
+  date_format: "%y%m%d"
+  date_subdir: "KOspec/{date}/spec"
+  dir: ""
   pattern: "*.fits"
   import_dir: ./data/spectra/latest
 ```
 
-その後、以下でrawdata置き場の最新2枚をA/Bペアとして確認し、`data/spectra/latest/` にコピーしてからQLを実行します。
+その後、以下で今日の `rawdata/KOspec/yymmdd/spec/` から最新2枚をA/Bペアとして確認し、`data/spectra/latest/` にコピーしてからQLを実行します。
 
 ```bash
 python3 main.py --import-latest
 ```
 
+同じ処理は短縮スクリプトでも実行できます。
+
+```bash
+./ql_latest.sh
+```
+
+特定日を指定する場合：
+
+```bash
+./ql_latest.sh --rawdata-date 260516
+```
+
 一時的にrawdata置き場を指定する場合：
 
 ```bash
-python3 main.py --import-latest --rawdata-dir /path/to/rawdata
+python3 main.py --import-latest --rawdata-dir /path/to/rawdata/KOspec/260516/spec
 ```
 
 `--import-latest` 実行時は、import先の既存FITSを消してから最新2枚だけを置くため、過去データを巻き込まずに直近ペアだけ処理します。
@@ -97,7 +112,8 @@ python3 main.py --help
 - `--aperture`: Aperture幅（ピクセル、デフォルト: 10）
 - `--z`: 赤方偏移（輝線表示用、デフォルト: 0）
 - `--import-latest`: rawdata置き場から最新A/Bペアをコピーしてから処理
-- `--rawdata-dir`: `--import-latest` 用のraw FITS置き場
+- `--rawdata-dir`: `--import-latest` 用のraw FITS置き場を完全パスで指定
+- `--rawdata-date`: `rawdata.root_dir` と `rawdata.date_subdir` から使う日付ディレクトリ名を指定
 - `--latest-pattern`: raw FITS検索パターン (デフォルト: config.yamlのrawdata.pattern または *.fits)
 - `--import-dir`: 最新A/Bペアのコピー先 (デフォルト: config.yamlのrawdata.import_dir または ./data/spectra/latest)
 - `--no-open-summary`: 処理後にsummary PNGを自動表示しない

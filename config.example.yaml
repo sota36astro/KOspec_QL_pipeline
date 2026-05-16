@@ -8,6 +8,13 @@ input:
 
 rawdata:
   # Set this on each observation PC.
+  # If raw files are stored under rawdata/KOspec/yymmdd/spec/, set root_dir
+  # to the rawdata directory and keep date_subdir as below.
+  root_dir: ""
+  date_format: "%y%m%d"
+  date_subdir: "KOspec/{date}/spec"
+
+  # Exact directory override. Leave empty when using root_dir/date_subdir.
   dir: ""
   pattern: "*.fits"
   import_dir: ./data/spectra/latest
